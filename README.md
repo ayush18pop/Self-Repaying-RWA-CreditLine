@@ -18,6 +18,18 @@ A DeFi protocol enabling **self-repaying loans** backed by yield-bearing Real Wo
 
 ---
 
+## 📍 Deployed Contracts (Mantle Sepolia)
+
+| Contract | Address |
+|----------|---------|
+| **VaultManager** | [`0x9e28244544dA3368Bd5aD1Ed0f5A8D75319F7828`](https://sepolia.mantlescan.xyz/address/0x9e28244544dA3368Bd5aD1Ed0f5A8D75319F7828) |
+| **PriceOracle** | [`0x4e1930cD75171F15B4f46DF32579F382C79CAC7d`](https://sepolia.mantlescan.xyz/address/0x4e1930cD75171F15B4f46DF32579F382C79CAC7d) |
+| **MockMETH** | [`0x0bE5Db694C48C1788Bc5DAe3F5B1C6B3E85149D7`](https://sepolia.mantlescan.xyz/address/0x0bE5Db694C48C1788Bc5DAe3F5B1C6B3E85149D7) |
+| **MockFBTC** | [`0x5f7F942d476dD48DCb08A9c4Eeb04A6FE6814DE5`](https://sepolia.mantlescan.xyz/address/0x5f7F942d476dD48DCb08A9c4Eeb04A6FE6814DE5) |
+| **MockUSDC** | [`0xD4A5876D5C09858701De181035a3BB79322aFCD6`](https://sepolia.mantlescan.xyz/address/0xD4A5876D5C09858701De181035a3BB79322aFCD6) |
+
+---
+
 ## 🏗️ Architecture
 
 ```
