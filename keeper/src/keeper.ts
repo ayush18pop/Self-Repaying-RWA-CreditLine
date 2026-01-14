@@ -1,6 +1,8 @@
 import { ethers } from 'ethers';
 import { createClient } from 'redis';
 import * as dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -13,6 +15,7 @@ const config = {
     SCAN_INTERVAL: 30 * 60 * 1000, // 30 minutes
     MIN_YIELD: BigInt(1e15), // Minimum yield threshold
     MIN_HEALTH_FACTOR: 150n, // 150% health factor required
+    HTTP_PORT: parseInt(process.env.HTTP_PORT || '3001'), // HTTP server port
 };
 
 // ABI for VaultManager contract
@@ -89,6 +92,9 @@ interface VaultCandidate {
 class OptimizedKeeper {
     private scanBatchSize = 100;
     private processBatchSize = 20;
+    private lastScanTime: Date | null = null;
+    private nextScanTime: Date | null = null;
+    private isScanning = false;
 
     async run(): Promise<void> {
         console.log('🚀 Optimized Keeper Started');
@@ -105,8 +111,27 @@ class OptimizedKeeper {
         await this.executeCycle();
     }
 
+    getStatus() {
+        const now = new Date();
+        const secondsUntilNextScan = this.nextScanTime
+            ? Math.max(0, Math.floor((this.nextScanTime.getTime() - now.getTime()) / 1000))
+            : 0;
+
+        return {
+            lastScanTime: this.lastScanTime?.toISOString() || null,
+            nextScanTime: this.nextScanTime?.toISOString() || null,
+            secondsUntilNextScan,
+            scanInterval: config.SCAN_INTERVAL / 1000, // in seconds
+            isScanning: this.isScanning,
+        };
+    }
+
     private async executeCycle(): Promise<void> {
-        console.log(`\n⏰ ${new Date().toISOString()} - Starting scan cycle`);
+        this.lastScanTime = new Date();
+        this.nextScanTime = new Date(this.lastScanTime.getTime() + config.SCAN_INTERVAL);
+        this.isScanning = true;
+
+        console.log(`\n⏰ ${this.lastScanTime.toISOString()} - Starting scan cycle`);
 
         try {
             // Phase 1: Quick scan (no price oracle)
@@ -121,6 +146,8 @@ class OptimizedKeeper {
             await this.processYieldWithFreshPrice(candidates);
         } catch (error) {
             console.error('❌ Cycle error:', error);
+        } finally {
+            this.isScanning = false;
         }
     }
 
@@ -290,5 +317,27 @@ class OptimizedKeeper {
     }
 }
 
+// START HTTP SERVER
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const keeper = new OptimizedKeeper();
+
+// Status endpoint
+app.get('/api/status', (req, res) => {
+    res.json(keeper.getStatus());
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Start HTTP server
+app.listen(config.HTTP_PORT, () => {
+    console.log(`🌐 HTTP server listening on port ${config.HTTP_PORT}`);
+});
+
 // START OPTIMIZED KEEPER
-new OptimizedKeeper().run().catch(console.error);
+keeper.run().catch(console.error);
